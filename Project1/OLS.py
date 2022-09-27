@@ -69,10 +69,10 @@ def OLS_Frank(x, y, pol_degree, noise = False):
     OLS_train = np.array([x0, y0, ytilde_train, y_train])
     OLS_test = np.array([x1, y1, ytilde_test, y_test])
 
-    return OLS_train, OLS_test, OLSbeta
+    return X_train, OLS_train, X_test, OLS_test, OLSbeta
 
 
-def plot_poldeg_analysis(x, y, pol_deg_lim):
+def plot_poldeg_analysis(x, y, pol_deg_lim, noise=False):
     n = []
     
     R2_train = []
@@ -80,17 +80,27 @@ def plot_poldeg_analysis(x, y, pol_deg_lim):
     
     R2_test = []
     MSE_test = []
+    
+    OLS = OLS_Frank(x, y, pol_deg_lim, noise)
+
+    X_train = OLS[0]
+    y_train = OLS[1][3]
+    X_test = OLS[2]
+    y_test = OLS[3][3]
     for i in range (1, pol_deg_lim + 1):
+        l = int((i+1)*(i+2)/2)		# Number of elements in beta
+        X_tr = X_train[:,:l]
+        X_te = X_test[:,:l]
+
         n.append(i)
-        OLS = OLS_Frank(x, y, i)
-        beta = OLS[2]
+        beta = np.linalg.pinv(X_tr.T @ X_tr) @ X_tr.T @ y_train
+
+        # and then make the prediction
+        ytilde_train = X_tr @ beta
+        ytilde_test = X_te @ beta
+
         beta_index = np.linspace(0, len(beta) - 1, len(beta))
 
-        ytilde_train = OLS[0][2]
-        y_train = OLS[0][3]
-        ytilde_test = OLS[1][2]
-        y_test = OLS[1][3]
-        
         R2_train.append(R2(y_train, ytilde_train))
         MSE_train.append(MSE(y_train, ytilde_train))
         
@@ -133,7 +143,7 @@ plot_3D(x2,y2,test)
 
 plot_poldeg_analysis(x,y,5)
 
-
+plot_poldeg_analysis(x,y,5,True)
 
 
 
