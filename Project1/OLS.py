@@ -17,7 +17,7 @@ def MSE(y_data,y_model):
 
 # A seed just to ensure that the random numbers are the same for every run.
 # Useful for eventual debugging.
-#np.random.seed(3155)
+np.random.seed(5)
 
 
 def designmatrix(n, x, y):
@@ -72,7 +72,7 @@ def OLS_Frank(x, y, pol_degree, noise = False):
     return X_train, OLS_train, X_test, OLS_test, OLSbeta
 
 
-def plot_poldeg_analysis(x, y, pol_deg_lim, noise=False):
+def plot_poldeg_analysis(x, y, pol_deg_lim, noise_bool=False, beta_bool=True, MSE_bool=True, R2_bool=True):
     n = []
     
     R2_train = []
@@ -81,7 +81,7 @@ def plot_poldeg_analysis(x, y, pol_deg_lim, noise=False):
     R2_test = []
     MSE_test = []
     
-    OLS = OLS_Frank(x, y, pol_deg_lim, noise)
+    OLS = OLS_Frank(x, y, pol_deg_lim, noise_bool)
 
     X_train = OLS[0]
     y_train = OLS[1][3]
@@ -107,59 +107,38 @@ def plot_poldeg_analysis(x, y, pol_deg_lim, noise=False):
         R2_test.append(R2(y_test, ytilde_test))
         MSE_test.append(MSE(y_test, ytilde_test))
         
-        plt.plot(beta_index, beta, "*-")
-    plt.show()
+        if beta_bool:
+            plt.plot(beta_index, beta, "*-")
+    if beta_bool:
+        plt.show()
 
-    plt.plot(n, MSE_train, "*-")
-    plt.plot(n, MSE_test, "*-")
-    plt.xlabel("Polynomial degree")
-    plt.ylabel("MSE")
-    plt.legend(["MSE train", "MSE test"])
-    plt.show()
+    if MSE_bool:
+        plt.plot(n, MSE_train, "*-")
+        plt.plot(n, MSE_test, "*-")
+        plt.xlabel("Polynomial degree")
+        plt.ylabel("MSE")
+        plt.legend(["MSE train", "MSE test"])
+        plt.show()
     
-    plt.plot(n, R2_train, "*-")
-    plt.plot(n, R2_test, "*-")
-    plt.legend(["R2 train", "R2 test"])
-    plt.xlabel("Polynomial degree")
-    plt.ylabel("R2")
-    plt.show()
+    if R2_bool:
+        plt.plot(n, R2_train, "*-")
+        plt.plot(n, R2_test, "*-")
+        plt.legend(["R2 train", "R2 test"])
+        plt.xlabel("Polynomial degree")
+        plt.ylabel("R2")
+        plt.show()
 
 x = np.sort(np.random.uniform(0,1,100))
 y = np.sort(np.random.uniform(0,1,100))
 
-"""
-p = OLS_Frank(x,y,2)
-train = p[0][2]
-x1 = p[0][0]
-y1 = p[0][1]
 
-test = p[1][2]
-x2 = p[1][0]
-y2 = p[1][1]
+#plot_poldeg_analysis(x,y,5)
 
-#plot_3D(x1,y1,train)
-plot_3D(x2,y2,test)
-"""
+#plot_poldeg_analysis(x,y,5, noise_bool = True)
 
-plot_poldeg_analysis(x,y,5)
-
-plot_poldeg_analysis(x,y,5,True)
+plot_poldeg_analysis(x, y, 20, R2_bool=False, beta_bool=False, noise_bool=True)
 
 
 
 
 
-
-"""
-
-
-print("Training R2 for OLS")
-print(R2(y_train,ytildeOLS))
-print("Training MSE for OLS")
-print(MSE(y_train,ytildeOLS))
-ypredictOLS = X_test @ OLSbeta
-print("Test R2 for OLS")
-print(R2(y_test,ypredictOLS))
-print("Test MSE OLS")
-print(MSE(y_test,ypredictOLS))
-"""
