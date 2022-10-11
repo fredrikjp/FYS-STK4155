@@ -5,7 +5,7 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 
-def plot_3D(x, y, z, title=""):
+def plot_3D(x, y, z, title="", filename=""):
     if len(x.shape)>1:
         fig = plt.figure()
         ax = fig.gca(projection="3d")
@@ -19,13 +19,17 @@ def plot_3D(x, y, z, title=""):
         # Add a color bar which maps values to colors.
         fig.colorbar(surf, shrink=0.5, aspect=5)
         plt.title(title)
+        if filename!="":
+            plt.savefig(filename)
         plt.show()
     else:
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot(x, y, z, '.')
+        ax = fig.add_subplot(111, projection="3d")
+        ax.plot(x, y, z, ".")
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         plt.title(title)
+        if filename!="":
+            plt.savefig(filename)
         plt.show()
