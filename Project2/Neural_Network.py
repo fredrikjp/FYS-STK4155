@@ -2,9 +2,9 @@ import numpy as np
 
 class NeuralNetwork:
     def __init__(self, X_data, Y_data, 
-                    n_hiddenLayers = 10, 
+                    n_hiddenLayers = 2, 
                     hiddenLayerSize = 20, 
-                    eta = 0.1, 
+                    eta = 0.0025, 
                     batch_size = 10, 
                     epochs = 10,
                     iterations = 100):
@@ -72,34 +72,38 @@ class NeuralNetwork:
     
     def backpropagation(self):
 
-        d = self.X_data.shape[0]
 
         d_sigmoid = self.ah * (1 - self.ah)
         l = self.X_data.shape[0]
-        delta_o = (self.ao - self.Y_data) 
-        self.output_weights_gradient = np.matmul(self.ah[(self.n_hiddenLayers-1)*l:].T, delta_o)
-        self.output_bias_gradient = np.sum(delta_o, axis=0)
-        self.Wo -= self.eta/d * self.output_weights_gradient
-        self.bo -= self.eta/d * self.output_bias_gradient
-
         k = self.hiddenLayerSize
-        delta = np.matmul(delta_o, self.Wo.T) * d_sigmoid[(self.n_hiddenLayers-1)*l:]
-        hidden_weights_gradient = np.matmul(self.ah[(self.n_hiddenLayers-2)*l:(self.n_hiddenLayers-1)*l].T, delta) 
-        hidden_bias_gradient = np.sum(delta, axis=0)
-        self.Wh[:,k*(self.n_hiddenLayers-2):] -= self.eta/d * hidden_weights_gradient
-        self.bh[-1] -= self.eta/d * hidden_bias_gradient
+ 
+        delta = (self.ao - self.Y_data) 
+        self.output_weights_gradient = np.matmul(self.ah[(self.n_hiddenLayers-1)*l:].T, delta)
+        self.output_bias_gradient = np.sum(delta, axis=0)
+        self.Wo -= self.eta * self.output_weights_gradient
+        self.bo -= self.eta * self.output_bias_gradient
+
+        if self.n_hiddenLayers > 1:
+            delta = np.matmul(delta, self.Wo.T) * d_sigmoid[(self.n_hiddenLayers-1)*l:]
+            hidden_weights_gradient = np.matmul(self.ah[(self.n_hiddenLayers-2)*l:(self.n_hiddenLayers-1)*l].T, delta) 
+            hidden_bias_gradient = np.sum(delta, axis=0)
+            self.Wh[:,k*(self.n_hiddenLayers-2):] -= self.eta * hidden_weights_gradient
+            self.bh[-1] -= self.eta * hidden_bias_gradient
 
         for i in range(self.n_hiddenLayers - 2, 0, -1):
             delta = np.matmul(delta, self.Wh[:,k*i:k*(i+1)].T) * d_sigmoid[i*l:(i+1)*l]
             hidden_weights_gradient = np.matmul(self.ah[(i-1)*l:i*l].T, delta) 
             hidden_bias_gradient = np.sum(delta, axis=0)
-            self.Wh[:,k*(i-1):k*i] -= self.eta/d * hidden_weights_gradient
-            self.bh[i] -= self.eta/d * hidden_bias_gradient
-        delta_i = np.matmul(delta, self.Wh[:,:k].T) * d_sigmoid[:l]
-        hidden_weights_gradient = np.matmul(self.X_data.T, delta_i)
-        hidden_bias_gradient = np.sum(delta_i, axis=0)
-        self.Wi -= self.eta/d * hidden_weights_gradient
-        self.bh[0] -= self.eta/d * hidden_bias_gradient
+            self.Wh[:,k*(i-1):k*i] -= self.eta * hidden_weights_gradient
+            self.bh[i] -= self.eta * hidden_bias_gradient
+        if self.n_hiddenLayers > 1:
+            delta = np.matmul(delta, self.Wh[:,:k].T) * d_sigmoid[:l]
+        else:
+            delta = np.matmul(delta, self.Wo.T) * d_sigmoid[:l]
+        hidden_weights_gradient = np.matmul(self.X_data.T, delta)
+        hidden_bias_gradient = np.sum(delta, axis=0)
+        self.Wi -= self.eta * hidden_weights_gradient
+        self.bh[0] -= self.eta * hidden_bias_gradient
         
         
 
@@ -143,7 +147,9 @@ if __name__ == "__main__":
     plt.scatter(X_test[:,1], Y_test.ravel())
     plt.show()
 
-    NN = NeuralNetwork(X_train, Y_train, )
+    NN.train()
+    NN.train()
+    NN.train()
     NN.train()
     y_pred = NN.forward_out(X_test)
 
