@@ -2,7 +2,7 @@ import numpy as np
 
 class NeuralNetwork:
     def __init__(self, X_data, Y_data, 
-                    n_hiddenLayers = 1, 
+                    n_hiddenLayers = 10, 
                     hiddenLayerSize = 20, 
                     eta = 0.1, 
                     batch_size = 10, 
@@ -108,7 +108,7 @@ class NeuralNetwork:
 
         for i in range(self.epochs):
             for j in range(self.iterations):
-                # pick datapoints with replacement
+                # pick datapoints without replacement
                 chosen_datapoints = np.random.choice(
                     data_indices, size=self.batch_size, replace=False
                 )
