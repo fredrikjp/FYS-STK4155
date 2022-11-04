@@ -4,13 +4,13 @@ class NeuralNetwork:
     def __init__(self, X_data, Y_data, 
                     activation_function = "sigmoid",
                     n_categories = 1,
-                    n_hiddenLayers = 1, 
+                    n_hiddenLayers = 0, 
                     hiddenLayerSize = 20, 
                     eta = 0.0025, 
                     lmbd = 0,
                     batch_size = 10, 
                     epochs = 10,
-                    iterations = 100):
+                    iterations = 1000):
         self.X_data_full = X_data
         self.Y_data_full = Y_data
         self.X_data = X_data
@@ -29,15 +29,20 @@ class NeuralNetwork:
         self.eta = eta
         self.lmbd = lmbd
 
-        # input weights 
-        self.Wi = np.random.randn(self.n_features, self.hiddenLayerSize)
-        # rest of hidden layer weights and biases
-        self.Wh = np.random.randn(self.hiddenLayerSize, self.hiddenLayerSize*(self.n_hiddenLayers-1))
-        self.bh = np.zeros((self.n_hiddenLayers, self.hiddenLayerSize)) + 0.01
-        # output weights and biases
-        self.Wo = np.random.randn(self.hiddenLayerSize, self.n_categories)
-        self.bo = np.zeros(self.n_categories) + 0.01
-        
+        if self.n_hiddenLayers > 0:
+            # input weights 
+            self.Wi = np.random.randn(self.n_features, self.hiddenLayerSize)
+            # rest of hidden layer weights and biases
+            self.Wh = np.random.randn(self.hiddenLayerSize, self.hiddenLayerSize*(self.n_hiddenLayers-1))
+            self.bh = np.zeros((self.n_hiddenLayers, self.hiddenLayerSize)) + 0.01
+            # output weights and biases
+            self.Wo = np.random.randn(self.hiddenLayerSize, self.n_categories)
+            self.bo = np.zeros(self.n_categories) + 0.01
+        else:
+            # output weights and biases
+            self.Wo = np.random.randn(self.n_features, self.n_categories)
+            self.bo = np.zeros(self.n_categories) + 0.01
+            
     def __f(self, x):
         if self.f == "sigmoid":
             return 1/(1+np.exp(-x))
@@ -64,12 +69,17 @@ class NeuralNetwork:
         l = self.X_data.shape[0]
         o = self.Y_data.shape[0]
 
+        if self.n_hiddenLayers == 0:
+            self.zo = np.matmul(self.X_data, self.Wo) + self.bo
+            self.ao = self.zo  
+            return 
+
         # hidden layer a and z
         self.ah = np.zeros((self.n_hiddenLayers * l, k))
         self.zh = np.zeros((self.n_hiddenLayers * l, k))
         # output a and z
-        self.ao = np.zeros((1, o))
-        self.zo = np.zeros((1, o))
+        self.ao = np.zeros((self.n_categories, o))
+        self.zo = np.zeros((self.n_categories, o))
         
         self.zh[0:l] = np.matmul(self.X_data, self.Wi) + self.bh[0]
         self.ah[0:l] = self.__f(self.zh[0:l])
@@ -82,6 +92,11 @@ class NeuralNetwork:
     
     def forward_out(self, X):
         k = self.hiddenLayerSize
+
+        if self.n_hiddenLayers == 0:
+            zo = np.matmul(X, self.Wo) + self.bo
+            ao = zo  
+            return ao
 
         zh = np.matmul(X, self.Wi) + self.bh[0]
         ah = self.__f(zh)
@@ -96,10 +111,20 @@ class NeuralNetwork:
     def backpropagation(self):
 
 
-        df = self.__df(self.ah)
         l = self.X_data.shape[0]
         k = self.hiddenLayerSize
- 
+
+        if self.n_hiddenLayers == 0:
+            delta = self.ao - self.Y_data
+            hidden_weights_gradient = np.matmul(self.X_data.T, delta)
+            if self.lmbd > 0.0:
+                hidden_weights_gradient += self.lmbd * self.Wo
+            hidden_bias_gradient = np.sum(delta, axis=0)
+            self.Wo -= self.eta * hidden_weights_gradient
+            self.bo -= self.eta * hidden_bias_gradient
+            return 
+        
+        df = self.__df(self.ah)
         delta = (self.ao - self.Y_data) 
         self.output_weights_gradient = np.matmul(self.ah[(self.n_hiddenLayers-1)*l:].T, delta)
         self.output_bias_gradient = np.sum(delta, axis=0)
@@ -184,6 +209,7 @@ if __name__ == "__main__":
     plt.show()
     """
     
+    """
     n = 6
     eta = np.logspace(-1,-5,n)
     lmbd = np.logspace(-1,-5,n)
@@ -203,15 +229,16 @@ if __name__ == "__main__":
     ax.set(xlabel=r"$\lambda$", ylabel=r"$\eta$", title=r"MSE($\eta$, $\lambda$)")
     plt.tight_layout()
     plt.show()
-    
+    """
    
     NN = NeuralNetwork(X_train, Y_train, lmbd=0.0, activation_function="sigmoid")
 
     NN.train()
     y_pred = NN.forward_out(X_test)
 
-    plt.scatter(X_test[:,1], y_pred, label = "Model")
     plt.scatter(X_test[:,1], Y_test.ravel(), label = "Target")
+    plt.scatter(X_test[:,1], y_pred, label = "Model")
+
     plt.legend()
     plt.title("Sigmoid")
     plt.xlabel("x")
@@ -223,8 +250,8 @@ if __name__ == "__main__":
     NN.train()
     y_pred = NN.forward_out(X_test)
 
-    plt.scatter(X_test[:,1], y_pred, label = "Model")
     plt.scatter(X_test[:,1], Y_test.ravel(), label = "Target")
+    plt.scatter(X_test[:,1], y_pred, label = "Model")
     plt.legend()
     plt.title("ReLU")
     plt.xlabel("x")
@@ -235,11 +262,12 @@ if __name__ == "__main__":
 
     NN.train()
     y_pred = NN.forward_out(X_test)
-
-    plt.scatter(X_test[:,1], y_pred, label = "Model")
+    
     plt.scatter(X_test[:,1], Y_test.ravel(), label = "Target")
+    plt.scatter(X_test[:,1], y_pred, label = "Model")
     plt.legend()
     plt.title("Leaky ReLU")
     plt.xlabel("x")
     plt.ylabel("y")
     plt.show()
+
