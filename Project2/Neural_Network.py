@@ -2,6 +2,8 @@ import numpy as np
 
 class NeuralNetwork:
     def __init__(self, X_data, Y_data, 
+                    activation_function = "sigmoid",
+                    n_categories = 1,
                     n_hiddenLayers = 1, 
                     hiddenLayerSize = 20, 
                     eta = 0.0025, 
@@ -13,7 +15,8 @@ class NeuralNetwork:
         self.Y_data_full = Y_data
         self.X_data = X_data
         self.Y_data = Y_data
-        self.n_categories = 1
+        self.f = activation_function
+        self.n_categories = n_categories
         self.n_inputs = X_data.shape[0]
         self.n_features = X_data.shape[1]
         self.n_hiddenLayers = n_hiddenLayers
@@ -35,8 +38,26 @@ class NeuralNetwork:
         self.Wo = np.random.randn(self.hiddenLayerSize, self.n_categories)
         self.bo = np.zeros(self.n_categories) + 0.01
         
-    def __sigmoid(self, x):
-        return 1/(1+np.exp(-x))
+    def __f(self, x):
+        if self.f == "sigmoid":
+            return 1/(1+np.exp(-x))
+
+        if self.f == "relu":
+            return np.maximum(0, x)
+
+        if self.f == "leaky relu":
+            return np.where(x > 0, x, 0.01*x)
+    
+    def __df(self, x):
+        if self.f == "sigmoid":
+            return x * (1 - x)
+
+        if self.f == "relu":
+            return np.where(x > 0, 1, 0)
+
+        if self.f == "leaky relu":
+            return np.where(x > 0, 1, 0.01)
+
 
     def forward(self):
         k = self.hiddenLayerSize
@@ -51,10 +72,10 @@ class NeuralNetwork:
         self.zo = np.zeros((1, o))
         
         self.zh[0:l] = np.matmul(self.X_data, self.Wi) + self.bh[0]
-        self.ah[0:l] = self.__sigmoid(self.zh[0:l])
+        self.ah[0:l] = self.__f(self.zh[0:l])
         for i in range(1, self.n_hiddenLayers):
             self.zh[l*i:l*(i+1)] = np.matmul(self.ah[l*(i-1):l*i], self.Wh[:,k*(i-1):k*i]) + self.bh[i]
-            self.ah[l*i:l*(i+1)] = self.__sigmoid(self.zh[l*i:l*(i+1)])
+            self.ah[l*i:l*(i+1)] = self.__f(self.zh[l*i:l*(i+1)])
 
         self.zo = np.matmul(self.ah[(self.n_hiddenLayers-1)*l:], self.Wo) + self.bo
         self.ao = self.zo    
@@ -63,10 +84,10 @@ class NeuralNetwork:
         k = self.hiddenLayerSize
 
         zh = np.matmul(X, self.Wi) + self.bh[0]
-        ah = self.__sigmoid(zh)
+        ah = self.__f(zh)
         for i in range(1, self.n_hiddenLayers):
             zh = np.matmul(ah, self.Wh[:,k*(i-1):k*i]) + self.bh[i]
-            ah = self.__sigmoid(zh)
+            ah = self.__f(zh)
 
         zo = np.matmul(ah, self.Wo) + self.bo
         ao = zo    
@@ -75,7 +96,7 @@ class NeuralNetwork:
     def backpropagation(self):
 
 
-        d_sigmoid = self.ah * (1 - self.ah)
+        df = self.__df(self.ah)
         l = self.X_data.shape[0]
         k = self.hiddenLayerSize
  
@@ -88,7 +109,7 @@ class NeuralNetwork:
         self.Wo -= self.eta * self.output_weights_gradient
         self.bo -= self.eta * self.output_bias_gradient
         if self.n_hiddenLayers > 1:
-            delta = np.matmul(delta, self.Wo.T) * d_sigmoid[(self.n_hiddenLayers-1)*l:]
+            delta = np.matmul(delta, self.Wo.T) * df[(self.n_hiddenLayers-1)*l:]
             hidden_weights_gradient = np.matmul(self.ah[(self.n_hiddenLayers-2)*l:(self.n_hiddenLayers-1)*l].T, delta) 
             hidden_bias_gradient = np.sum(delta, axis=0)
             if self.lmbd > 0.0:
@@ -98,7 +119,7 @@ class NeuralNetwork:
             self.bh[-1] -= self.eta * hidden_bias_gradient
 
         for i in range(self.n_hiddenLayers - 2, 0, -1):
-            delta = np.matmul(delta, self.Wh[:,k*i:k*(i+1)].T) * d_sigmoid[i*l:(i+1)*l]
+            delta = np.matmul(delta, self.Wh[:,k*i:k*(i+1)].T) * df[i*l:(i+1)*l]
             hidden_weights_gradient = np.matmul(self.ah[(i-1)*l:i*l].T, delta) 
             if self.lmbd > 0.0:
                 hidden_weights_gradient += self.lmbd * self.Wh[:,k*(i-1):k*i]
@@ -106,9 +127,9 @@ class NeuralNetwork:
             self.Wh[:,k*(i-1):k*i] -= self.eta * hidden_weights_gradient
             self.bh[i] -= self.eta * hidden_bias_gradient
         if self.n_hiddenLayers > 1:
-            delta = np.matmul(delta, self.Wh[:,:k].T) * d_sigmoid[:l]
+            delta = np.matmul(delta, self.Wh[:,:k].T) * df[:l]
         else:
-            delta = np.matmul(delta, self.Wo.T) * d_sigmoid[:l]
+            delta = np.matmul(delta, self.Wo.T) * df[:l]
         hidden_weights_gradient = np.matmul(self.X_data.T, delta)
         if self.lmbd > 0.0:
                 hidden_weights_gradient += self.lmbd * self.Wi
@@ -162,7 +183,7 @@ if __name__ == "__main__":
     plt.scatter(X_test[:,1], Y_test.ravel())
     plt.show()
     """
-
+    
     n = 6
     eta = np.logspace(-1,-5,n)
     lmbd = np.logspace(-1,-5,n)
@@ -182,15 +203,43 @@ if __name__ == "__main__":
     ax.set(xlabel=r"$\lambda$", ylabel=r"$\eta$", title=r"MSE($\eta$, $\lambda$)")
     plt.tight_layout()
     plt.show()
+    
    
-   
-    NN = NeuralNetwork(X_train, Y_train, lmbd=0.0)
+    NN = NeuralNetwork(X_train, Y_train, lmbd=0.0, activation_function="sigmoid")
 
     NN.train()
     y_pred = NN.forward_out(X_test)
 
-    plt.scatter(X_test[:,1], y_pred)
-    plt.scatter(X_test[:,1], Y_test.ravel())
+    plt.scatter(X_test[:,1], y_pred, label = "Model")
+    plt.scatter(X_test[:,1], Y_test.ravel(), label = "Target")
+    plt.legend()
+    plt.title("Sigmoid")
+    plt.xlabel("x")
+    plt.ylabel("y")
     plt.show()
 
-    
+    NN = NeuralNetwork(X_train, Y_train, lmbd=0.0, activation_function="relu")
+
+    NN.train()
+    y_pred = NN.forward_out(X_test)
+
+    plt.scatter(X_test[:,1], y_pred, label = "Model")
+    plt.scatter(X_test[:,1], Y_test.ravel(), label = "Target")
+    plt.legend()
+    plt.title("ReLU")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
+ 
+    NN = NeuralNetwork(X_train, Y_train, lmbd=0.0, activation_function="leaky relu")
+
+    NN.train()
+    y_pred = NN.forward_out(X_test)
+
+    plt.scatter(X_test[:,1], y_pred, label = "Model")
+    plt.scatter(X_test[:,1], Y_test.ravel(), label = "Target")
+    plt.legend()
+    plt.title("Leaky ReLU")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
