@@ -56,7 +56,7 @@ if __name__ == '__main__':
     lamb = 0.1
     #lamb = 0
 
-
+    """
     gm.gd(eta, n_epochs, lamb=lamb)
     gd_plain = gm.get_thetas()
 
@@ -75,3 +75,29 @@ if __name__ == '__main__':
     theta_dict = {'gd': gd_plain, 'gd_momentum': gd_momentum, 'sgd_theta': sgd, 'sgd_momentum': sgd_momentum}
     pl = plot.Plot(p)
     pl.plot_mse_vs_theta(theta_dict)
+    """
+
+    for method in ["Plain", "AdaGrad", "RMSprop", "ADAM"]:
+        if method == "Plain":
+            eta = 0.001
+        else:
+            eta = 0.05
+        gm.gd(eta, n_epochs, lamb=lamb, tuning_method=method)
+        gd_plain = gm.get_thetas()
+
+        gm.gd(eta, n_epochs, gamma=momentum, lamb=lamb, tuning_method=method)
+        # gm.gd(eta, n_epochs, 0.1) 
+        gd_momentum = gm.get_thetas()
+
+        gm.sgd(eta, n_epochs_sgd, size_batch, lamb=lamb, tuning_method=method)
+        sgd = gm.get_thetas()
+
+        gm.sgd(eta, n_epochs_sgd, size_batch, gamma=momentum, lamb=lamb, tuning_method=method)
+        sgd_momentum = gm.get_thetas()
+
+        # Plotting
+        theta_dict = {'gd': gd_plain, 'gd_momentum': gd_momentum, 'sgd': sgd, 'sgd_momentum': sgd_momentum}
+        plt.title(method)
+
+        pl = plot.Plot(p)
+        pl.plot_iter_MSE(theta_dict)
