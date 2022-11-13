@@ -130,7 +130,6 @@ class HiddenLayer(Layer):
         delta = self.next_Layer.delta @ np.transpose(self.next_Layer.W) * self.derivative_activation
         gradient_weights = np.transpose(self.prev_Layer.get_output()) @ delta
         gradient_bias = np.sum(delta, axis = 0)
-
         # Use optimizer class to find new change
         W_change, b_change = self.op.update_change(gradient_weights, gradient_bias)
 

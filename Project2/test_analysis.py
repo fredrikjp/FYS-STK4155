@@ -50,7 +50,7 @@ parameters = {
     "X_test": x_test,
     "y_test": y_test,
     "eta": 0.001, 
-    "depth": 3 ,
+    "depth": 1,
     "width": 5,
     "n_output_nodes": 1,
     "cost_score": 'mse',
@@ -60,7 +60,7 @@ parameters = {
     "lambd": 0,
     "tuning_method": 'none',
     "n_minibatches": 10,
-    "epochs": 50
+    "epochs": 2000
     }
 
 
@@ -73,17 +73,19 @@ a.plot_heatmap("cost")
 """
 
 b = analysis.Analysis(**parameters)
-eta = np.logspace(-7, -1, 7)
-lambd = [1e-4, 1e-3, 1e-2, 1e-1, 1e-0, 1.5]
-b.eta = eta
-b.lambd = lambd
-#b.plot_heatmap("cost")
 
-b.lambd = 0.99
-b.eta = eta[::2]
-b.eta = [0.1, 0.2]
-#b.plot_score("cost")
+eta = np.linspace(0.005,0.4,5) 
+# Eta = 0.4 resulting in weights imploding
+#b.eta = eta
+b.eta = 0.4
+lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
+b.lambd = lambd
 b.plot_model()
+
+b.eta = eta
+b.plot_heatmap("cost", filename="_sigmoid_MSE(eta,lmb).pdf")
+
+
 
 b.lambd = lambd[::2]
 b.eta = 0.01
@@ -94,13 +96,13 @@ c = analysis.Analysis(**parameters)
 c.activation_hidden = "relu"
 c.eta = np.logspace(-7, -1, 7)
 c.lambd = np.linspace(0.001, 0.1, 7)
-c.plot_heatmap("cost")
+c.plot_heatmap("cost", filename="_relu_MSE(eta,lmb).pdf")
 
 d = analysis.Analysis(**parameters)
 d.activation_hidden = "leaky_relu"
 d.eta = np.logspace(-7, -1, 7)
-d.lambd = np.linspace(0.0001, 0.01, 7)
-d.plot_heatmap("cost")
+d.lambd = np.linspace(0.001, 0.1, 7)
+d.plot_heatmap("cost", filename="_leaky_relu_MSE(eta,lmb).pdf")
 
 
 """

@@ -78,12 +78,14 @@ class GradientDescent:
         # If new epoch
         if i == 1:
             n = gradients.shape[0]
-            self.Giter = np.zeros((n,n))
+            #self.Giter = np.zeros((n,n))
+            self.Giter = np.zeros_like(gradients)
         # Accumulated gradients outer product
-        self.Giter += gradients @ gradients.T
-        
+        #self.Giter += gradients @ gradients.T
+        self.Giter += gradients**2
         # Adding delta to avoid the possibility of dividing by zero
-        Ginverse = np.c_[eta/(delta+np.sqrt(np.diagonal(self.Giter)))]
+        #Ginverse = np.c_[eta/(delta+np.sqrt(np.diagonal(self.Giter)))]
+        Ginverse = eta / np.sqrt(self.Giter + delta)
         update = np.multiply(Ginverse, gradients)
         return update
 
@@ -105,7 +107,7 @@ class GradientDescent:
         return update
 
     def update_ADAM(self, eta, gradients, i, beta1 = 0.9, beta2 = 0.99, delta=1e-8):
-        
+
         if i == 1:
             self.theta_first_momentum = 0
             self.theta_second_momentum = 0
@@ -241,13 +243,13 @@ class GradientDescent:
                     gradients = grad_func(minibatch_X, minibatch_y, theta_new, lamb)
 
                 if tuning_method == "AdaGrad":
-                    grad_step = self.update_adagrad(eta, gradients, i=i)
+                    grad_step = self.update_adagrad(eta, gradients, i=j)
                 
                 elif tuning_method == "RMSprop":
-                    grad_step = self.update_RMSprop(eta, gradients, i=i)
+                    grad_step = self.update_RMSprop(eta, gradients, i=j)
             
                 elif tuning_method == "ADAM":
-                    grad_step = self.update_ADAM(eta, gradients, i=i)
+                    grad_step = self.update_ADAM(eta, gradients, i=j)
            
                 else:
                     grad_step = eta*gradients

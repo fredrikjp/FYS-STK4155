@@ -64,6 +64,7 @@ class Analysis:
         tic = time.perf_counter()
         if save_scores == True:
             tn.train(epochs=self_copy.epochs, save_scores = save_scores, X_test = self.X_test, y_test = self.y_test)
+
         else: 
             tn.train(epochs=self_copy.epochs)
         toc = time.perf_counter()
@@ -98,7 +99,7 @@ class Analysis:
         test_model = tn.get_output(self.X_test)
         return train_model.ravel(), test_model.ravel()
 
-    def plot_model(self): 
+    def plot_model(self, filename: str = ""): 
         """ Plot neural network model """
         
         self_copy = copy.deepcopy(self) 
@@ -124,9 +125,11 @@ class Analysis:
             tn = self.setup_network(self_copy, save_scores=True)
             train_model, test_model = self.__get_model(tn)
         
-            sns.lineplot(x=x_train, y=test_model, linewidth=1, label=f'test data')
-            sns.lineplot(x=x_test, y=train_model, linewidth=1, label=f'train data')
+            sns.lineplot(x=x_test, y=test_model, linewidth=1, label=f'test data')
+            sns.lineplot(x=x_train, y=train_model, linewidth=1, label=f'train data')
             self.__toggle_legend(ax)
+            if filename != "":
+                plt.savefig(filename)
             plt.show()
             return
 
@@ -134,7 +137,7 @@ class Analysis:
         variable_values = values[0][1]
         for val in variable_values: 
             setattr(self_copy, variable_name, val)
-            tn = self.setup_network(self_copy, save_scores = True)
+            tn = self.setup_network(self_copy, save_scores = False)
             train_model, test_model = self.__get_model(tn)
 
             sns.lineplot(x=x_test, y=test_model, linewidth=1, label=f'Test data  |  {val}', linestyle = "--")
@@ -143,10 +146,12 @@ class Analysis:
         sns.lineplot(x=x_train, y=self.y_train.ravel(), linewidth=1, label=f'Target')
         plt.title(f'Model with different {self.__fix_label(variable_name)}')
         self.__toggle_legend(ax)
+        if filename != "":
+                plt.savefig(filename)
         plt.show()
 
 
-    def plot_score(self, score: str): 
+    def plot_score(self, score: str, filename: str = ""): 
         """ Plot score as function of epochs """
         score_options = ['accuracy', 'cost']
         if not score in score_options: 
@@ -178,6 +183,8 @@ class Analysis:
             sns.lineplot(x=epochs, y=test_scores, linewidth=1, label=f'test data')
             sns.lineplot(x=epochs, y=train_scores, linewidth=1, label=f'train data')
             self.__toggle_legend(ax)
+            if filename != "":
+                plt.savefig(filename)
             plt.show()
             return
 
@@ -194,6 +201,8 @@ class Analysis:
 
         plt.title(f'Scores with different {self.__fix_label(variable_name)}')
         self.__toggle_legend(ax)
+        if filename != "":
+                plt.savefig(filename)
         plt.show()
 
 
@@ -215,7 +224,7 @@ class Analysis:
 
         return values
 
-    def plot_heatmap(self, score: str = 'accuracy'): 
+    def plot_heatmap(self, score: str = 'accuracy', filename: str = ""): 
         score_options = ['accuracy', 'cost'] # Cost not implemented
         assert(score in score_options)
 
@@ -258,17 +267,19 @@ class Analysis:
         # Plot heatmaps
         plt.figure(figsize=(12,8))
         plt.title('Training Data')
-        sns.heatmap(train_scores, annot=True, fmt='.5f',
+        sns.heatmap(train_scores, annot=True, fmt='.6f',
                 # vmax = vmax, 
                 cbar_kws={'label': label}, 
                 xticklabels = [f"{x_val:.5g}" for x_val in values[0][1]],
                 yticklabels=[f"{y_val:.5g}" for y_val in values[1][1]]) 
         plt.xlabel(self.__fix_label(x_label))
         plt.ylabel(self.__fix_label(y_label))
+        if filename != "":
+                plt.savefig("train"+filename)
 
         plt.figure(figsize=(12,8))
         plt.title('Test Data')
-        sns.heatmap(test_scores, annot=True, fmt='.5f',
+        sns.heatmap(test_scores, annot=True, fmt='.6f',
                 # vmax = vmax, 
                 cbar_kws={'label': label}, 
                 xticklabels = [f"{x_val:.5g}" for x_val in values[0][1]],
@@ -276,7 +287,8 @@ class Analysis:
 
         plt.xlabel(self.__fix_label(x_label))
         plt.ylabel(self.__fix_label(y_label))
-
+        if filename != "":
+                plt.savefig("test"+filename)
         plt.show()
 
     def __toggle_legend(self, ax):

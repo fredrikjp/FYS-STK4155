@@ -19,8 +19,8 @@ if __name__ == '__main__':
     reload(plot)
 
     eta = 0.001
-    n_epochs = 50 
-    n_epochs_sgd = 20
+    n_epochs = 100 
+    n_epochs_sgd = 25
     p = poly_data.PolyData(n_data = 100)
     momentum = 0.1
     size_batch = 20
@@ -56,11 +56,11 @@ if __name__ == '__main__':
     lamb = 0.1
     #lamb = 0
 
-    """
+    
     gm.gd(eta, n_epochs, lamb=lamb)
     gd_plain = gm.get_thetas()
 
-    eta = 0.05
+    #eta = 0.05
     gm.gd(eta, n_epochs, gamma=momentum, lamb=lamb, tuning_method="ADAM")
     # gm.gd(eta, n_epochs, 0.1) 
     gd_momentum = gm.get_thetas()
@@ -72,16 +72,17 @@ if __name__ == '__main__':
     sgd_momentum = gm.get_thetas()
 
     # Plotting
+    """
     theta_dict = {'gd': gd_plain, 'gd_momentum': gd_momentum, 'sgd_theta': sgd, 'sgd_momentum': sgd_momentum}
     pl = plot.Plot(p)
     pl.plot_mse_vs_theta(theta_dict)
-    """
+    """    
 
     for method in ["Plain", "AdaGrad", "RMSprop", "ADAM"]:
         if method == "Plain":
             eta = 0.001
         else:
-            eta = 0.05
+            eta = 0.1
         gm.gd(eta, n_epochs, lamb=lamb, tuning_method=method)
         gd_plain = gm.get_thetas()
 
