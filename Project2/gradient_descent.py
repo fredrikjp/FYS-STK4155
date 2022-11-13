@@ -65,15 +65,6 @@ class GradientDescent:
         self.thetas_init = np.random.randn(n_coeff, 1) # Inital guess for theta's 
         print(self.thetas_init)
 
-
-    def delta_gd(self, X, y, theta, eta, momentum = None): 
-        grad_func = grad(self.costOLS, 2)
-        gradients = grad_func(X, y, theta)
-
-        if momentum == None:
-            return -eta * gradients
-
-
     def update_adagrad(self, eta, gradients, i, delta=1e-8):
         # If new epoch
         if i == 1:
@@ -149,10 +140,10 @@ class GradientDescent:
             # Use OLS or L2 regularization as cost funciton
             if lamb==0: 
                 grad_func = grad(self.costOLS, 2)
-                gradients = grad_func(self.X_data, self.y_data, theta_new)
+                gradients = 1 / len(self.y_data) * grad_func(self.X_data, self.y_data, theta_new)
             else:
                 grad_func = grad(self.costRidge, 2)
-                gradients = grad_func(self.X_data, self.y_data, theta_new, lamb)
+                gradients = 1 / len(self.y_data) * grad_func(self.X_data, self.y_data, theta_new, lamb)
 
             if tuning_method == "AdaGrad":
                 grad_step = self.update_adagrad(eta, gradients, i)
@@ -237,10 +228,10 @@ class GradientDescent:
                 # Use OLS or L2 regularization as cost funciton
                 if lamb == 0: 
                     grad_func = grad(self.costOLS, 2)
-                    gradients = grad_func(minibatch_X, minibatch_y, theta_new)
+                    gradients = 1 / len(minibatch_y) * grad_func(minibatch_X, minibatch_y, theta_new)
                 else:
                     grad_func = grad(self.costRidge, 2)
-                    gradients = grad_func(minibatch_X, minibatch_y, theta_new, lamb)
+                    gradients = 1 / len(minibatch_y) * grad_func(minibatch_X, minibatch_y, theta_new, lamb)
 
                 if tuning_method == "AdaGrad":
                     grad_step = self.update_adagrad(eta, gradients, i=j)
