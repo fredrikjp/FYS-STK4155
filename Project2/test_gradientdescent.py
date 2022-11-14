@@ -21,7 +21,7 @@ if __name__ == '__main__':
     reload(plot)
 
     eta = 0.001
-    n_epochs = 100 
+    n_epochs = 100
     n_epochs_sgd = 25
     p = poly_data.PolyData(n_data = 100)
     momentum = 0.1
@@ -74,23 +74,28 @@ if __name__ == '__main__':
 
     i = 0
 
-    X = gm.X_data    
-    y = gm.y_data
+    X_train = gm.X_data    
+    y_train = gm.y_data
 
+    X = p.get_X_test()
+    y = p.get_y_test()
+
+    tuning_method = ""
+    """
     for eta in etaa:
         j = 0
         for lamb in lmb:
-            gm.gd(eta, n_epochs, lamb=lamb)
+            gm.gd(eta, n_epochs, lamb=lamb, tuning_method=tuning_method)
             gd_pred = X @ gm.get_theta()
             
 
-            gm.gd(eta, n_epochs, gamma=momentum, lamb=lamb)
+            gm.gd(eta, n_epochs, gamma=momentum, lamb=lamb, tuning_method=tuning_method)
             gdm_pred = X @ gm.get_theta()
 
-            gm.sgd(eta, n_epochs_sgd, size_batch, lamb=lamb)
+            gm.sgd(eta, n_epochs_sgd, size_batch, lamb=lamb, tuning_method=tuning_method)
             sgd_pred = X @ gm.get_theta()
 
-            gm.sgd(eta, n_epochs_sgd, size_batch, gamma=momentum, lamb=lamb)
+            gm.sgd(eta, n_epochs_sgd, size_batch, gamma=momentum, lamb=lamb, tuning_method=tuning_method)
             sgdm_pred = X @ gm.get_theta()
 
             MSE_gd[i,j] = mse(y, gd_pred)
@@ -108,7 +113,7 @@ if __name__ == '__main__':
         plt.figure(figsize=(12,8))
         plt.title(name)
         sns.heatmap(MSE, annot=True, fmt='.5g',
-                 vmax = 0.1, 
+                vmax = 0.1, 
                 cbar_kws={'label': "MSE"}, 
                 xticklabels = [f"{x_val:.5g}" for x_val in lmb],
                 yticklabels=[f"{y_val:.5g}" for y_val in etaa]) 
@@ -124,8 +129,56 @@ if __name__ == '__main__':
             plt.savefig("sgdm_MSE(eta,lmb).pdf")
         i +=1
     plt.show()
+    """
 
-    eta = 0.75
+    lamb = 0
+    #size_batch = np.linspace(2, len(y_train)/5, 5, dtype=int)
+    n_epochs_sgd = np.linspace(10, 200, 5, dtype=int)
+
+    for tuning_method in ["", "AdaGrad", "RMSprop", "ADAM"]:
+
+        i = 0
+
+        if tuning_method == "ADAM":
+            etaa = np.logspace(-3, -1, 10)
+            n = len(etaa)
+        else:
+            etaa = np.linspace(0.1, 1, 10)
+            n = len(etaa)
+
+        MSE_sgdm = np.zeros((n,m))
+
+        for eta in etaa:
+            j = 0
+            for epochs in n_epochs_sgd:
+                gm.sgd(eta, epochs, size_batch, gamma=momentum, lamb=lamb, tuning_method=tuning_method)
+                sgdm_pred = X @ gm.get_theta()
+
+                MSE_sgdm[i,j] = mse(y, sgdm_pred)
+
+                j += 1
+            i += 1
+
+        # Heatmaps
+
+        plt.figure(figsize=(12,8))
+        plt.title(tuning_method+" MSE stochastic gradient descent with momentum")
+        sns.heatmap(MSE_sgdm, annot=True, fmt='.5g',
+                vmax = 0.1, 
+                cbar_kws={'label': "MSE"}, 
+                xticklabels = [f"{x_val:.5g}" for x_val in n_epochs_sgd],
+                yticklabels=[f"{y_val:.5g}" for y_val in etaa]) 
+        plt.xlabel(f"Number of epochs")
+        plt.ylabel(f"$\\eta$")
+        plt.savefig(tuning_method+"_sgdm_MSE(eta,epochs).pdf")
+    plt.show()
+    
+
+
+    n_epochs_sgd = 100
+
+
+    eta = 0.1
     for method in ["Plain", "AdaGrad", "RMSprop", "ADAM"]:
         
         gm.gd(eta, n_epochs, lamb=lamb, tuning_method=method)

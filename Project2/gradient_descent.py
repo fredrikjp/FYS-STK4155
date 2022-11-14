@@ -174,7 +174,7 @@ class GradientDescent:
         self.thetas = thetas
 
 
-    def sgd(self, eta: float, n_epochs: int, size_batch: int, gamma: float = None, lamb: float = 0, tuning_method = None):
+    def sgd(self, eta: float, n_epochs: int, size_batch: int, n_minibaches: int = 0, gamma: float = None, lamb: float = 0, tuning_method = None):
         """
         lamb: l2 regularization parameter if 0 -> mse
         """
@@ -191,7 +191,10 @@ class GradientDescent:
 
 
         n_data = len(self.y_data)
-        n_minibatches = int(n_data/size_batch)
+        if n_minibaches == 0:
+            n_minibatches = int(n_data/size_batch)
+        else:
+            n_minibaches == n_minibaches
 
         thetas = np.zeros((n_epochs*n_minibatches+1, n_coeff))
         thetas[0,:] = theta_new.T
