@@ -12,6 +12,9 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
 import sklearn as skl 
 
+from sklearn.neural_network import MLPRegressor
+
+
 import jens_neural_network as neural_network
 import jens_scores as scores
 import jens_activation as activation
@@ -44,6 +47,85 @@ y_train, y_test = Y_train[:,np.newaxis], Y_test[:,np.newaxis]
 
 
 
+# # sklearn activation sigmoid
+"""
+gamma = 0
+
+lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
+etaa = np.linspace(0.1, 2, 5) 
+
+n_minibatches = 10
+batch_size = int(len(Y_train)/n_minibatches)
+n_epochs = 2000
+
+n = len(lambd)
+m = len(etaa)
+
+
+
+MSE = np.zeros((m,n))
+
+j=0
+
+for eta in etaa:
+    i = 0
+    for lmb in lambd:
+        NN_sigmoid = MLPRegressor(hidden_layer_sizes=(5), activation="logistic", solver="sgd", alpha=lmb, batch_size = batch_size, learning_rate_init = eta, momentum = 0, max_iter=n_epochs ,n_iter_no_change=2000)
+        NN_sigmoid.fit(x_train, y_train.ravel())
+        MSE[j, i] = NN_sigmoid.loss_
+        i+=1
+    j+=1
+plt.figure(figsize=(12,8))
+plt.title("Sklearn neural network with activation function sigmoid train MSE")
+sns.heatmap(MSE, annot=True, fmt='.5g',
+        vmax = 0.1, 
+        cbar_kws={'label': "MSE"}, 
+        xticklabels = [f"{x_val:.5g}" for x_val in lambd],
+        yticklabels=[f"{y_val:.5g}" for y_val in etaa]) 
+plt.ylabel(f"$\\eta$")
+plt.xlabel(f"$\\lambda$")
+plt.savefig("train_sklearn_sigmoid_NN_MSE(eta,lmb).pdf")
+plt.show()
+
+"""
+
+
+# # sklearn activation relu
+"""
+etaa = np.logspace(-6, 0, 7)
+
+
+
+n = len(lambd)
+m = len(etaa)
+
+MSE = np.zeros((m,n))
+j=0
+for eta in etaa:
+    i = 0
+    for lmb in lambd:
+        NN_relu = MLPRegressor(hidden_layer_sizes=(5), activation="relu", solver="sgd", alpha=lmb, batch_size = batch_size, learning_rate_init = eta, momentum = 0, max_iter=n_epochs ,n_iter_no_change=2000)
+        NN_relu.fit(x_train, y_train.ravel())
+        MSE[j, i] = NN_relu.loss_
+        i+=1
+    j+=1
+plt.figure(figsize=(12,8))
+plt.title("Sklearn neural network with activation function relu train MSE")
+sns.heatmap(MSE, annot=True, fmt='.5g',
+        vmax = 0.1, 
+        cbar_kws={'label': "MSE"}, 
+        xticklabels = [f"{x_val:.5g}" for x_val in lambd],
+        yticklabels=[f"{y_val:.5g}" for y_val in etaa]) 
+plt.ylabel(f"$\\eta$")
+plt.xlabel(f"$\\lambda$")
+plt.savefig("train_sklearn_relu_NN_MSE(eta,lmb).pdf")
+plt.show()
+
+"""
+
+
+
+
 parameters = {
     "X_train": x_train,
     "y_train": y_train,
@@ -65,176 +147,52 @@ parameters = {
 
 
 
-"""
+
+
+# NN sigmoid
+""" 
+
 a = analysis.Analysis(**parameters)
-a.width = np.linspace(1, 7, 7, dtype=int)
-a.depth = 10*np.linspace(0, 5, 6, dtype=int)
-a.plot_heatmap("cost")
+eta = np.linspace(0.05, 0.5, 5) 
+# Eta = 0.4 resulting in weights imploding
+#a.eta = eta
+a.eta = 0.4
+#a.plot_model()
+
+lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
+a.lambd = lambd
+#a.plot_model()
+
+a.eta = eta
+a.lambd = lambd
+a.plot_heatmap("cost", filename="_sigmoid_MSE(eta,lmb).pdf")
 """
+
 
 b = analysis.Analysis(**parameters)
-
-eta = np.linspace(0.005,0.4,5) 
-# Eta = 0.4 resulting in weights imploding
-#b.eta = eta
-b.eta = 0.4
-lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
-b.lambd = lambd
-b.plot_model()
-
-b.eta = eta
-b.plot_heatmap("cost", filename="_sigmoid_MSE(eta,lmb).pdf")
+b.eta = 0.3875
+b.width = np.linspace(0, 4, 5, dtype=int)
+b.depth = 10*np.linspace(0, 4, 5, dtype=int)
+b.plot_heatmap("cost")
 
 
-
-b.lambd = lambd[::2]
-b.eta = 0.01
-b.plot_score("cost")
-
+# NN relu
+"""
+etaa = np.logspace(-7, -1, 7)
 
 c = analysis.Analysis(**parameters)
 c.activation_hidden = "relu"
-c.eta = np.logspace(-7, -1, 7)
-c.lambd = np.linspace(0.001, 0.1, 7)
+c.eta = etaa
+c.lambd = lambd
 c.plot_heatmap("cost", filename="_relu_MSE(eta,lmb).pdf")
+"""
 
+# NN leaky relu
+"""
 d = analysis.Analysis(**parameters)
 d.activation_hidden = "leaky_relu"
-d.eta = np.logspace(-7, -1, 7)
-d.lambd = np.linspace(0.001, 0.1, 7)
+d.eta = etaa
+d.lambd = lambd
 d.plot_heatmap("cost", filename="_leaky_relu_MSE(eta,lmb).pdf")
-
-
 """
-    np.random.seed(5)
-    # Load the data
-    cancer = load_breast_cancer()
-    targets = cancer.target[:,np.newaxis]
-    test_size = 0.2
-    features = cancer.feature_names
-    X_train, X_test, y_train, y_test = train_test_split(cancer.data,targets,random_state=0, test_size=test_size)
 
-    # Scale data with mean and std
-    scaler = skl.preprocessing.StandardScaler()
-    scaler.fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_test = scaler.transform(X_test)
-
-
-    parameters = {
-        "X_train": X_train,
-        "y_train": y_train,
-        "X_test": X_test,
-        "y_test": y_test,
-        "eta": 0.001, 
-        "depth": 1 ,
-        "width": 10,
-        "n_output_nodes": 1,
-        "cost_score": 'cross_entropy',
-        "activation_hidden": 'sigmoid',
-        "activation_output": 'sigmoid',
-        "gamma": 0.9,
-        "lambd": 0,
-        "tuning_method": 'none',
-        "n_minibatches": 20,
-        "epochs": 400
-        }
-
-    a = analysis.Analysis(**parameters)
-
-
-
-#  ____            _         _ 
-# |  _ \ __ _ _ __| |_    __| |
-# | |_) / _` | '__| __|  / _` |
-# |  __/ (_| | |  | |_  | (_| |
-# |_|   \__,_|_|   \__|  \__,_|
-    # a = analysis.Analysis(**parameters)
-    # # find optimal number of n_minibatches
-    # a.epochs = 400
-    # a.n_minibatches = [1, 5, 10, 15, 20]
-    # a.plot_score('accuracy')
-
-    # # Find optimal values fro lmabda and eta
-    # a = analysis.Analysis(**parameters) # XXX: in progress
-    # a.epochs = 200  # XXX: Reduced number of ephcos to speedup
-    # a.lambd = np.logspace(-5, 0, 6)
-    # a.lambd[-1] = 0
-    # a.eta = np.logspace(-5, -1, 5)
-    # a.plot_heatmap('accuracy')
-
-
-    # Use new best parameters for lambd and eta
-    parameters = {
-        "X_train": X_train,
-        "y_train": y_train,
-        "X_test": X_test,
-        "y_test": y_test,
-        "eta": 0.1,  # XXX: changed
-        "depth": 1 ,
-        "width": 10,
-        "n_output_nodes": 1,
-        "cost_score": 'cross_entropy',
-        "activation_hidden": 'sigmoid',
-        "activation_output": 'sigmoid',
-        "gamma": 0.9,
-        "lambd": 0.1,  # XXX: changed
-        "tuning_method": 'none',
-        "n_minibatches": 20,
-        "epochs": 200 # XXX: changed
-        }
-
-    # # Example: heatmap with width and depth
-    # a = analysis.Analysis(**parameters)
-    # a.width = [5, 10, 15, 20]
-    # a.depth = [1, 2, 3]
-    # a.plot_heatmap('accuracy')
-
-
-    # # Example: heatmap with width and depth
-    # a = analysis.Analysis(**parameters)
-    # a.lambd = 0
-    # a.width = [5, 10, 15, 20]
-    # a.depth = [1, 2, 3]
-    # a.plot_heatmap('accuracy')
-
-
-    # Use new parameters for network dept and width
-    parameters = {
-        "X_train": X_train,
-        "y_train": y_train,
-        "X_test": X_test,
-        "y_test": y_test,
-        "eta": 0.1,  
-        "depth": 2 ,  # XXX: changed 
-        "width": 5,  # XXX: changed
-        "n_output_nodes": 1,
-        "cost_score": 'cross_entropy',
-        "activation_hidden": 'sigmoid',
-        "activation_output": 'sigmoid',
-        "gamma": 0.9,
-        "lambd": 0.1, 
-        "tuning_method": 'none',
-        "n_minibatches": 20,
-        "epochs": 200 
-        }
-
-
-    # a = analysis.Analysis(**parameters)
-    # a.lambd = 0
-    # a.eta = 0.001 # Low eta to compare convergence rate
-    # a.lambd = [0, 1e-3, 1e-2, 0.1]
-    # a.plot_score('accuracy')
-
-
-    # Test different learning rate tuning 
-    a = analysis.Analysis(**parameters)
-    a.lambd = 0
-    a.eta = 0.001 # Low eta to compare convergence rate
-    a.tuning_method = ['none', 'adam', 'rms_prop', 'adagrad']
-    a.plot_score('accuracy')
-
-    
-
-    # a.activation_hidden = ['sigmoid', 'relu', 'leaky_relu']
-"""

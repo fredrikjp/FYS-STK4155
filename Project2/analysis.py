@@ -267,7 +267,7 @@ class Analysis:
         # Plot heatmaps
         plt.figure(figsize=(12,8))
         plt.title('Training Data')
-        sns.heatmap(train_scores, annot=True, fmt='.6f',
+        sns.heatmap(train_scores, annot=True, fmt='.5g',
                 # vmax = vmax, 
                 cbar_kws={'label': label}, 
                 xticklabels = [f"{x_val:.5g}" for x_val in values[0][1]],
@@ -279,7 +279,7 @@ class Analysis:
 
         plt.figure(figsize=(12,8))
         plt.title('Test Data')
-        sns.heatmap(test_scores, annot=True, fmt='.6f',
+        sns.heatmap(test_scores, annot=True, fmt='.5g',
                 # vmax = vmax, 
                 cbar_kws={'label': label}, 
                 xticklabels = [f"{x_val:.5g}" for x_val in values[0][1]],
