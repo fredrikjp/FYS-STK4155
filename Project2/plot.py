@@ -49,7 +49,6 @@ class Plot:
         get_data = getattr(self.data_object, get_func_name)
         X, y = get_data()
         y = y.reshape(-1, 1)
-        #fig, ax = plt.subplots()
 
         for method, thetas in thetas_dict.items():
             n = len(thetas)
@@ -62,11 +61,11 @@ class Plot:
 
             sns.set_style("darkgrid")
             plt.xlabel('Iteration')
-            plt.ylabel('MSE')
-            sns.lineplot(x=iter, y=mse_scores, marker='o', linewidth=0, label=method)
+            plt.ylabel('ln(MSE)')
+            sns.lineplot(x=iter, y=np.log(mse_scores), linewidth=1, label=method)
 
         plt.legend()
-        plt.show()
+        
 
 
     def plot_iter(self): 

@@ -46,19 +46,13 @@ class GradientDescent:
     def costOLS(self, X, y, theta):
         assert(len(y) != 1)
         y_pred = X @ theta
-        return np.sum((y[:,np.newaxis] - y_pred)**2) #/len(y) # XXX
+        return np.sum((y[:,np.newaxis] - y_pred)**2)/len(y) # XXX
 
     def costRidge(self, X, y, theta, lamb): 
         assert(len(y) != 1)
         y_pred = X @ theta
-        return np.sum((y[:,np.newaxis] - y_pred)**2) + lamb * np.sum(y_pred**2) #/len(y) # XXX
+        return np.sum((y[:,np.newaxis] - y_pred)**2)/len(y) + lamb * np.sum(theta**2) # XXX
 
-
-    def grad_costOLS(self): 
-        return 
-
-    def get_hessian(self): 
-        pass
 
     def set_initial_conditions(self):
         n_coeff = len(self.data_object.coeff) # Number of polynomail coefficents inlcuding 0
@@ -68,14 +62,10 @@ class GradientDescent:
     def update_adagrad(self, eta, gradients, i, delta=1e-8):
         # If new epoch
         if i == 1:
-            n = gradients.shape[0]
-            #self.Giter = np.zeros((n,n))
             self.Giter = np.zeros_like(gradients)
         # Accumulated gradients outer product
-        #self.Giter += gradients @ gradients.T
         self.Giter += gradients**2
         # Adding delta to avoid the possibility of dividing by zero
-        #Ginverse = np.c_[eta/(delta+np.sqrt(np.diagonal(self.Giter)))]
         Ginverse = eta / np.sqrt(self.Giter + delta)
         update = np.multiply(Ginverse, gradients)
         return update
@@ -102,7 +92,7 @@ class GradientDescent:
         if i == 1:
             self.theta_first_momentum = 0
             self.theta_second_momentum = 0
-
+        
         # First and second momentum
         self.theta_first_momentum = beta1 * self.theta_first_momentum + (1-beta1) * gradients
         self.theta_second_momentum = beta2 * self.theta_second_momentum + (1-beta2) * gradients**2
@@ -111,6 +101,7 @@ class GradientDescent:
         theta_first_momentum = self.theta_first_momentum/(1-beta1**i)
         theta_second_momentum = self.theta_second_momentum/(1-beta2**i)
         update = eta * theta_first_momentum/(np.sqrt(theta_second_momentum) + delta)
+        
         return update
 
     def gd(self, eta: float, n_epochs: int = 100, gamma: float = None, lamb: float = 0,  tuning_method = None):
@@ -140,10 +131,10 @@ class GradientDescent:
             # Use OLS or L2 regularization as cost funciton
             if lamb==0: 
                 grad_func = grad(self.costOLS, 2)
-                gradients = 1 / len(self.y_data) * grad_func(self.X_data, self.y_data, theta_new)
+                gradients = grad_func(self.X_data, self.y_data, theta_new)
             else:
                 grad_func = grad(self.costRidge, 2)
-                gradients = 1 / len(self.y_data) * grad_func(self.X_data, self.y_data, theta_new, lamb)
+                gradients = grad_func(self.X_data, self.y_data, theta_new, lamb)
 
             if tuning_method == "AdaGrad":
                 grad_step = self.update_adagrad(eta, gradients, i)
@@ -196,6 +187,7 @@ class GradientDescent:
         else:
             n_minibaches == n_minibaches
 
+
         thetas = np.zeros((n_epochs*n_minibatches+1, n_coeff))
         thetas[0,:] = theta_new.T
         j = 1
@@ -231,10 +223,10 @@ class GradientDescent:
                 # Use OLS or L2 regularization as cost funciton
                 if lamb == 0: 
                     grad_func = grad(self.costOLS, 2)
-                    gradients = 1 / len(minibatch_y) * grad_func(minibatch_X, minibatch_y, theta_new)
+                    gradients = grad_func(minibatch_X, minibatch_y, theta_new)
                 else:
                     grad_func = grad(self.costRidge, 2)
-                    gradients = 1 / len(minibatch_y) * grad_func(minibatch_X, minibatch_y, theta_new, lamb)
+                    gradients = grad_func(minibatch_X, minibatch_y, theta_new, lamb)
 
                 if tuning_method == "AdaGrad":
                     grad_step = self.update_adagrad(eta, gradients, i=j)
