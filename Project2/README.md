@@ -1,1 +1,1 @@
-The code in the second_NN directory have not been used for any of the results in the report. 
+The code in the "second_NN" directory has not been used for any of the results in the report. 
