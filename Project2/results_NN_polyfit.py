@@ -46,12 +46,11 @@ x_train, x_test = X_train[:,1][:,np.newaxis], X_test[:,1][:,np.newaxis]
 y_train, y_test = Y_train[:,np.newaxis], Y_test[:,np.newaxis]
 
 
+lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
 
 # # sklearn activation sigmoid
-"""
+#"""
 gamma = 0
-
-lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
 etaa = np.linspace(0.1, 2, 5) 
 
 n_minibatches = 10
@@ -84,14 +83,12 @@ plt.xlabel(f"$\\lambda$")
 plt.savefig("train_sklearn_sigmoid_NN_MSE(eta,lmb).pdf")
 plt.show()
 
-"""
+#"""
 
 
 # # sklearn activation relu
-"""
+#"""
 etaa = np.logspace(-6, 0, 7)
-
-
 
 n = len(lambd)
 m = len(etaa)
@@ -117,8 +114,7 @@ plt.ylabel(f"$\\eta$")
 plt.xlabel(f"$\\lambda$")
 plt.savefig("train_sklearn_relu_NN_MSE(eta,lmb).pdf")
 plt.show()
-
-"""
+#"""
 
 
 
@@ -143,55 +139,43 @@ parameters = {
     }
 
 
-
-
+# NN MSE(width, depth)
+#"""
+a = analysis.Analysis(**parameters)
+a.eta = 0.3875
+a.width = [5, 10, 20]
+a.depth = [1, 2, 3]
+a.plot_heatmap("cost")
+#"""
 
 # NN sigmoid
-""" 
-
-a = analysis.Analysis(**parameters)
-eta = np.linspace(0.05, 0.5, 5) 
-# Eta = 0.4 resulting in weights imploding
-#a.eta = eta
-a.eta = 0.4
-#a.plot_model()
-
-lambd = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e-0]
-a.lambd = lambd
-#a.plot_model()
-
-a.eta = eta
-a.lambd = lambd
-a.plot_heatmap("cost", filename="_sigmoid_MSE(eta,lmb).pdf")
-"""
-
-"""
+#""" 
 b = analysis.Analysis(**parameters)
-b.eta = 0.3875
-b.width = np.linspace(0, 4, 5, dtype=int)
-b.depth = 10*np.linspace(0, 4, 5, dtype=int)
-b.plot_heatmap("cost")
-"""
+eta = np.linspace(0.05, 0.5, 5) 
+b.eta = eta
+b.lambd = lambd
+b.plot_heatmap("cost", filename="_sigmoid_MSE(eta,lmb).pdf")
+#"""
 
-# NN relu
-"""
 etaa = np.logspace(-7, -1, 7)
 
+# NN relu
+#"""
 c = analysis.Analysis(**parameters)
 c.activation_hidden = "relu"
 c.eta = etaa
 c.lambd = lambd
 c.plot_heatmap("cost", filename="_relu_MSE(eta,lmb).pdf")
-"""
+#"""
 
 # NN leaky relu
-"""
+#"""
 d = analysis.Analysis(**parameters)
 d.activation_hidden = "leaky_relu"
 d.eta = etaa
 d.lambd = lambd
 d.plot_heatmap("cost", filename="_leaky_relu_MSE(eta,lmb).pdf")
-"""
+#"""
 
 # Resulting NN polynomial versus target
 #"""
