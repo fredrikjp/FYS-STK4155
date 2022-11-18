@@ -1,4 +1,5 @@
 import numpy as np
+import sklearn as skl
 
 class NeuralNetwork:
     def __init__(self, X, Y, X_test = None, Y_test = None,
@@ -20,7 +21,10 @@ class NeuralNetwork:
         X_data, Y_data = np.copy(X), np.copy(Y)
 
         if normalization:
-            X_data = self.normalize(X_data)
+            scaler = skl.preprocessing.StandardScaler()
+            scaler.fit(X_data)
+            X_data = scaler.transform(X_data)
+            #X_data = self.normalize(X_data)
         self.X_data_full = X_data
         self.Y_data_full = Y_data
         self.X_data = X_data
@@ -43,20 +47,22 @@ class NeuralNetwork:
         self.lmbd = lmbd
         self.gamma = gamma
         self.C = cost_function
-
         
-
+        
         # Analysis parameters 
+        X_test, Y_test = np.copy(X_test), np.copy(Y_test)
+        if self.normalization and X_test.any() != None:
+            X_test = scaler.transform(X_test)
+            #X_test = self.normalize(X_test)
         self.X_test, self.Y_test = X_test, Y_test
-        if normalization:
-            self.X_test = self.normalize(X_test)
+
         self.MSE = MSE
         self.accuracy = accuracy
         self.MSE_train = []
         self.acc_train = []
         self.MSE_test = []
         self.acc_test = []
-
+        
         if self.n_hiddenLayers > 0:
             # input weights 
             self.Wi = np.random.randn(self.n_features, self.hiddenLayerSize)
@@ -122,7 +128,7 @@ class NeuralNetwork:
         if self.C == "SE":
             return (x-self.Y_data)
         if self.C == "BCE":
-            return -self.Y_data/x + (1-self.Y_data)/(1-x)
+            return 1/len(self.Y_data)*(-self.Y_data/x + (1-self.Y_data)/(1-x))
         
     def normalize(self, X):
         for i in range(len(X[0])):
@@ -314,10 +320,10 @@ if __name__ == "__main__":
 
     np.random.seed(0)
 
-    N1 = NeuralNetwork(X_train, Y_train, activation_function="sigmoid", output_function="sigmoid", cost_function="BCE", eta=0.0025, n_hiddenLayers=5, hiddenLayerSize=10, iterations=10)
-    N2 = NeuralNetwork(X_train, Y_train, normalization=True, activation_function="sigmoid", output_function="sigmoid", cost_function="BCE", eta=0.0025, n_hiddenLayers=5, hiddenLayerSize=10, iterations=10)
-    N3 = NeuralNetwork(X_train, Y_train, normalization=True, activation_function="relu", output_function="sigmoid", cost_function="BCE", eta=0.001, n_hiddenLayers=3, hiddenLayerSize=10, iterations=10)
-    N4 = NeuralNetwork(X_train, Y_train, normalization=True, activation_function="leaky relu", output_function="sigmoid", cost_function="BCE", eta=0.01, n_hiddenLayers=3, hiddenLayerSize=10, iterations=10)
+    N1 = NeuralNetwork(X_train, Y_train, activation_function="sigmoid", output_function="sigmoid", cost_function="BCE", eta=0.0025, n_hiddenLayers=5, hiddenLayerSize=10)
+    N2 = NeuralNetwork(X_train, Y_train, normalization=True, activation_function="sigmoid", output_function="sigmoid", cost_function="BCE", eta=0.0025, n_hiddenLayers=5, hiddenLayerSize=10)
+    N3 = NeuralNetwork(X_train, Y_train, normalization=True, activation_function="relu", output_function="sigmoid", cost_function="BCE", eta=0.001, n_hiddenLayers=3, hiddenLayerSize=10)
+    N4 = NeuralNetwork(X_train, Y_train, normalization=True, activation_function="leaky relu", output_function="sigmoid", cost_function="BCE", eta=0.01, n_hiddenLayers=3, hiddenLayerSize=10)
 
     accuracy1 = []
     accuracy2 = []
@@ -348,15 +354,16 @@ if __name__ == "__main__":
     plt.ylabel("Accuracy")
     plt.xlabel("Iterations")
     plt.show()
-    n = 100
+    n = 1000
 
+    N1.train()
 
-
-    N = NeuralNetwork(X_train, Y_train, activation_function="sigmoid", output_function="sigmoid", cost_function="BCE", eta=0.000025, n_hiddenLayers=5, hiddenLayerSize=100, iterations=10)
+    np.random.seed(1)
+    N = NeuralNetwork(X_train, Y_train, activation_function="sigmoid", output_function="sigmoid", cost_function="BCE", eta=0.000025, n_hiddenLayers=5, hiddenLayerSize=100)
     accuracy = []
     MSE = []
     sklearn_accuracy = []
-    dnn = MLPClassifier(hidden_layer_sizes=(100, 100, 100, 100, 100), activation="logistic", learning_rate_init=0.0025, max_iter=100, alpha=0, n_iter_no_change=100)
+    #dnn = MLPClassifier(hidden_layer_sizes=(100, 100, 100, 100, 100), activation="logistic", learning_rate_init=0.0025, max_iter=100, alpha=0, n_iter_no_change=100)
     
     for i in range(n):
         #dnn = MLPClassifier(hidden_layer_sizes=(100,100,100,100,100), activation="logistic", learning_rate_init=0.000025, max_iter=i+1, alpha=0, momentum=0)
@@ -366,12 +373,12 @@ if __name__ == "__main__":
         #sklearn_accuracy.append(np.sum(dnn.predict(X_test)==Y_test)/len(Y_test))
         N.forward()
         accuracy.append(np.sum(N.binary_predict(N.forward_out(X_test)) == np.array([Y_test]).T)/len(Y_test))
-        MSE.append(np.mean((N.ao.ravel()-Y_train.ravel())**2))
+        #MSE.append(np.mean((N.ao.ravel()-Y_train.ravel())**2))
         N.backpropagation()
-    dnn.fit(X_train, Y_train.ravel())
-    loss = dnn.loss_curve_
-    x = np.linspace(0,1,len(loss))
-    print(len(loss))
+    #dnn.fit(X_train, Y_train.ravel())
+    #loss = dnn.loss_curve_
+    x = np.linspace(0,n,n)
+    #print(len(loss))
     plt.title("Test acc")
     plt.plot(x, accuracy)
     plt.show()

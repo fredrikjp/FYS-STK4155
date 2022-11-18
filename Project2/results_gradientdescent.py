@@ -30,40 +30,19 @@ if __name__ == '__main__':
     momentum = 0.1
     size_batch = 20
     gm = gradient_descent.GradientDescent(p)
+
+    X_train = gm.X_data    
+    y_train = gm.y_data
+
+    X = p.get_X_test()
+    y = p.get_y_test()
     
-
-#  ____                  _            _          _   _             
-# |  _ \ ___  __ _ _   _| | __ _ _ __(_)______ _| |_(_) ___  _ __  
-# | |_) / _ \/ _` | | | | |/ _` | '__| |_  / _` | __| |/ _ \| '_ \ 
-# |  _ <  __/ (_| | |_| | | (_| | |  | |/ / (_| | |_| | (_) | | | |
-# |_| \_\___|\__, |\__,_|_|\__,_|_|  |_/___\__,_|\__|_|\___/|_| |_|
-#            |___/                                                 
-
     
-    lamb = 0.1
-    #lamb = 0
-
     
-    gm.gd(eta, n_epochs, lamb=lamb)
-    gd_plain = gm.get_thetas()
-
-    #eta = 0.05
-    gm.gd(eta, n_epochs, gamma=momentum, lamb=lamb, tuning_method="ADAM")
-    # gm.gd(eta, n_epochs, 0.1) 
-    gd_momentum = gm.get_thetas()
-
-    gm.sgd(eta, n_epochs_sgd, size_batch, lamb=lamb, tuning_method="RMSprop")
-    sgd = gm.get_thetas()
-
-    gm.sgd(eta, n_epochs_sgd, size_batch, gamma=momentum, lamb=lamb, tuning_method="AdaGrad")
-    sgd_momentum = gm.get_thetas()
-
-    # Plotting
-    """
-    theta_dict = {'gd': gd_plain, 'gd_momentum': gd_momentum, 'sgd_theta': sgd, 'sgd_momentum': sgd_momentum}
-    pl = plot.Plot(p)
-    pl.plot_mse_vs_theta(theta_dict)
-    """    
+    
+    # MSE(eta, lambda)
+    #"""
+  
     etaa = np.linspace(0.6, 1, 5)
     lmb = [0, 1e-4, 1e-3, 1e-2, 1e-1]
 
@@ -77,13 +56,6 @@ if __name__ == '__main__':
 
     i = 0
 
-    X_train = gm.X_data    
-    y_train = gm.y_data
-
-    X = p.get_X_test()
-    y = p.get_y_test()
-
-    """
     tuning_method = ""
     
     for eta in etaa:
@@ -133,10 +105,10 @@ if __name__ == '__main__':
             plt.savefig("sgdm_MSE(eta,lmb).pdf")
         i +=1
     plt.show()
-    """
+    #"""
     
-    """
     # sgd MSE(eta, momentum)
+    #"""
 
     lamb = 0
     etaa = np.linspace(0.1, 1, 10)
@@ -181,67 +153,15 @@ if __name__ == '__main__':
 
         plt.savefig(tuning_method+"_sgdm_MSE(eta,momentum).pdf")
     plt.show()
-        
-    """
-
-    # sgd(eta,epochs)
-    """
-    np.random.seed(0)
-    lamb = 0
-    #size_batch = np.linspace(2, len(y_train)/5, 5, dtype=int)
-    n_epochs_sgd = np.linspace(10, 200, 5, dtype=int)
-
-    for tuning_method in ["", "AdaGrad", "RMSprop", "ADAM"]:
-
-        i = 0
-
-        momentum = 0.4
-
-        if tuning_method == "ADAM":
-            etaa = np.logspace(-3, -1, 10)
-            n = len(etaa)
-            momentum = 0
-        else:
-            etaa = np.linspace(0.1, 1, 10)
-            n = len(etaa)
-
-        MSE_sgdm = np.zeros((n,m))
-
-        for eta in etaa:
-            j = 0
-            for epochs in n_epochs_sgd:
-                gm.sgd(eta, epochs, size_batch, gamma=momentum, lamb=lamb, tuning_method=tuning_method)
-                sgdm_pred = X @ gm.get_theta()
-
-                MSE_sgdm[i,j] = mse(y, sgdm_pred)
-
-                j += 1
-            i += 1
-
-        # Heatmaps
-
-        plt.figure(figsize=(12,8))
-        plt.title(tuning_method+f" MSE stochastic gradient descent $\\gamma$={momentum}")
-        sns.heatmap(MSE_sgdm, annot=True, fmt='.5g',
-                #vmax = 0.1, 
-                cbar_kws={'label': "MSE"}, 
-                xticklabels = [f"{x_val:.5g}" for x_val in n_epochs_sgd],
-                yticklabels=[f"{y_val:.2e}" for y_val in etaa]) 
-        plt.xlabel(f"Number of epochs")
-        plt.ylabel(f"$\\eta$")
-        plt.savefig(tuning_method+"_sgdm_MSE(eta,epochs).pdf")
-    plt.show()
-    """
-
+    #"""
     
     
     #MSE(iteration) for different minibatch sizes
-    """
+    #"""
     np.random.seed(1)
     n_epochs = 200
 
     lamb = 0
-    eta = 0.1
     momentum = 0.4
     for minibatch in [2, 5, 10, 80]:
         n_epochs_sgd = int(minibatch/len(y_train)*200)
@@ -269,7 +189,7 @@ if __name__ == '__main__':
         plt.savefig("minibatch_"+str(minibatch)+"_MSE(iter).pdf")
     plt.show()
 
-    """
+    #"""
 
     # Polynomial prediction and target plot
     #"""
@@ -294,38 +214,3 @@ if __name__ == '__main__':
     #"""
 
     
-    #MSE(iteration)
-    """
-    np.random.seed(1)
-    n_epochs_sgd = 5
-    n_epochs = 20
-
-    lamb = 0
-    eta = 0.1
-    momentum = 0.4
-    for method in ["Plain", "AdaGrad", "RMSprop", "ADAM"]:
-        
-        gm.gd(eta, n_epochs, lamb=lamb, tuning_method=method)
-        gd_plain = gm.get_thetas()
-
-        gm.gd(eta, n_epochs, gamma=momentum, lamb=lamb, tuning_method=method)
-        # gm.gd(eta, n_epochs, 0.1) 
-        gd_momentum = gm.get_thetas()
-
-        gm.sgd(eta, n_epochs_sgd, size_batch, lamb=lamb, tuning_method=method)
-        sgd = gm.get_thetas()
-
-        gm.sgd(eta, n_epochs_sgd, size_batch, gamma=momentum, lamb=lamb, tuning_method=method)
-        sgd_momentum = gm.get_thetas()
-
-        # Plotting
-        theta_dict = {'gd': gd_plain, 'gd_momentum': gd_momentum, 'sgd': sgd, 'sgd_momentum': sgd_momentum}
-        
-        sns.set_style("darkgrid")
-        plt.figure()
-        plt.title(method)
-        pl = plot.Plot(p)
-        pl.plot_iter_MSE(theta_dict)
-        plt.savefig(method+"MSE(iter).pdf")
-    plt.show()
-    """

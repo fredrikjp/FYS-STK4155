@@ -53,7 +53,7 @@ np.random.seed(0)
 
 
 NN = NeuralNetwork(X_train, Y_train, activation_function="sigmoid")
-
+NN.eta = 0.00001
 NN.train()
 y_pred = NN.forward_out(X_test)
 

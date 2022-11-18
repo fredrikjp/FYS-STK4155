@@ -61,12 +61,9 @@ n_epochs = 2000
 n = len(lambd)
 m = len(etaa)
 
-
-
 MSE = np.zeros((m,n))
 
 j=0
-
 for eta in etaa:
     i = 0
     for lmb in lambd:
@@ -168,13 +165,13 @@ a.lambd = lambd
 a.plot_heatmap("cost", filename="_sigmoid_MSE(eta,lmb).pdf")
 """
 
-
+"""
 b = analysis.Analysis(**parameters)
 b.eta = 0.3875
 b.width = np.linspace(0, 4, 5, dtype=int)
 b.depth = 10*np.linspace(0, 4, 5, dtype=int)
 b.plot_heatmap("cost")
-
+"""
 
 # NN relu
 """
@@ -196,3 +193,11 @@ d.lambd = lambd
 d.plot_heatmap("cost", filename="_leaky_relu_MSE(eta,lmb).pdf")
 """
 
+# Resulting NN polynomial versus target
+#"""
+e = analysis.Analysis(**parameters)
+e.activation_hidden = "sigmoid"
+e.eta = 0.1
+e.lambd = 0
+e.plot_model(filename="NN_polyfit_result.pdf")
+#"""

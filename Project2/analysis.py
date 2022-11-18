@@ -127,6 +127,9 @@ class Analysis:
         
             sns.lineplot(x=x_test, y=test_model, linewidth=1, label=f'test data')
             sns.lineplot(x=x_train, y=train_model, linewidth=1, label=f'train data')
+            sns.lineplot(x=x_train, y=self.y_train.ravel(), linewidth=1, linestyle="--" ,label=f'Target')
+            plt.title("Neural network fit compared to training target")
+
             self.__toggle_legend(ax)
             if filename != "":
                 plt.savefig(filename)

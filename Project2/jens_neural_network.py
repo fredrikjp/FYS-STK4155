@@ -95,7 +95,7 @@ class HiddenLayer(Layer):
     def init_bias_and_weigths(self):
         # TODO: check if prev layer is Initialized
         self.b = np.zeros(self.n_nodes) + 0.01
-        self.W = np.random.randn(self.prev_Layer.n_nodes, self.n_nodes) * 2
+        self.W = np.random.randn(self.prev_Layer.n_nodes, self.n_nodes) 
 
     def get_output(self):
         if np.size(self.a_l) == 1: 
