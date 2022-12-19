@@ -12,10 +12,8 @@ import sklearn as skl
 
 class SVM:
 
-    def __init__(self, X, y, eta, lmbd, n_iter, gamma = 0.1, C=1,test_size = 0.25, seed = None, kernel = "GRBF"):
-        self.eta = eta
-        self.lmbd = lmbd 
-        self.n_iter = n_iter
+    def __init__(self, X, y, gamma = 0.1, C=1,test_size = 0.25, seed = None, kernel = "GRBF"):
+  
         self.gamma = gamma  
         self.C = C
 
@@ -30,16 +28,12 @@ class SVM:
         self.X_train, self.X_test, self.y_train, self.y_test = \
                     train_test_split(self.X, self.y, test_size=test_size, random_state=self.seed)
 
-                
-        
         self.n_features = X.shape[1]
-        self.__initialise()
-
-    def __initialise(self):
-        self.w = np.zeros(self.n_features)
+        
         self.b = 0
 
     def K(self, xi, xj):
+        # GRBF kernel function
         return np.exp(-self.gamma * np.linalg.norm(xi - xj)**2)    
     
     def solve(self):
@@ -51,7 +45,7 @@ class SVM:
         X = self.X_train
         n = self.X_train.shape[0]
 
-        q = -1 * np.ones(n)
+        q = -1 * np.ones(n).T
         P = np.zeros((n, n))
         for i in range(n):
             for j in range(n):
@@ -73,18 +67,20 @@ class SVM:
         sol = solvers.qp(P, q, G, h, A, b)
         self.lmb = np.array(sol["x"])
         self.lmb_non_zero_indecies = np.where(self.lmb > 1e-5)[0]
+        # Calculate bias
         self.calc_b()
 
     def calc_b(self):
+        # Calculates the bias term neede for the predict method
         b = 0
         for j in self.lmb_non_zero_indecies:
-            if self.lmb[j] < self.C: ########################################
-                for i in range(self.X_train.shape[0]):
-                    b -= self.lmb[i] * self.y_train[i] * self.K(self.X_train[j], self.X_train[i])
-                b += self.y_train[j]
+            for i in range(self.X_train.shape[0]):
+                b -= self.lmb[i] * self.y_train[i] * self.K(self.X_train[j], self.X_train[i])
+            b += self.y_train[j]
         self.b = b / len(self.lmb_non_zero_indecies)
         
     def predict(self):
+        # Uses model to predict the clasification of test data
         n_predictions = self.X_test.shape[0]
         predictions = np.zeros(n_predictions)
         for j in range(n_predictions):
@@ -127,57 +123,21 @@ class SVM:
         mean_accuracy = np.mean(accuracies)
         return accuracies, mean_accuracy
  
-    def train(self):
-        for i in range(self.n_iter):
-            for i in range(self.X_train.shape[0]):
-                
-                if (self.X_train[i,:] @ self.w.T + self.b) * self.y_train[i] < 1:
-                    w_grad = self.lmbd * self.w - self.y_train[i] * self.X_train[i,:]
-                    b_grad = - self.y_train[i]
-                else:
-                    w_grad = self.lmbd*self.w
-                    b_grad = 0
-                self.w -= self.eta * w_grad
-                self.b -= self.eta * b_grad
     
-    def plot_hyperplane_2D(self, feature_indecies):
-        if len(feature_indecies) != 2:
-            assert ValueError("Only compatible with 2 features")
-        
-        i = feature_indecies[0]
-        j = feature_indecies[1]
-
-        fig, ax = plt.subplots(1, 1, figsize=(10,6))
-
-        plt.scatter(self.X_train[:,i], self.X_train[:,j], marker="o", label = "train", c = self.y_train.T)
-        plt.scatter(self.X_test[:,i], self.X_test[:,j], marker="x", label = "test", c = self.y_test.T)
-        
-        x_1 = np.max(self.X_train[:,i])
-        x_2 = np.min(self.X_train[:,i])
-        y_1 = (self.w[i] * x_1 + self.b)/(-self.w[j])
-        y_2 = (self.w[i] * x_2 + self.b)/(-self.w[j])
-        H = [y_1, y_2]
-        margin = 1/np.linalg.norm(np.array([self.w[i], self.w[j]]))
-        ax.plot([x_1, x_2], H, label = "Hyperplane")
-        ax.plot([x_1, x_2], H + margin, "--", label = "Support vector", c = "grey")
-        ax.plot([x_1, x_2], H - margin, "--", c = "grey")
-        plt.legend()
-        plt.show()
-
 
 
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 
-#for z in [0,1,4]:
-for z in [1]:
+#"""
+for z in [0,1,4]:
     input_path = 'big_test.csv'
     r = read_csv.ReadCSV(input_path)
     r._remove_series([z, 2, 3, 5])
     X_df, y_df = r.get_df()
 
-
+    # Shaping data to be compatible with the SVM class
     X = X_df.values
     y = y_df.values[:,0]
     y = np.where(y == 1, 1, -1)
@@ -192,10 +152,10 @@ for z in [1]:
     
     for i in range(n):
         for j in range(m):
-            obj = SVM(X, y, 0, 0, 0, gamma=gamma[i], C=c[j], test_size = 0.25, seed=0)
+            obj = SVM(X, y, gamma=gamma[i], C=c[j], test_size = 0.25, seed=0)
             accuracy[i,j] = obj.k_fold(n_kfold=30)[1]
 
-    # Heatmap
+    # Heatmap of accuracies for different C and gamma
 
     plt.figure(figsize=(12,8))
     plt.title("SVM(All features)")
@@ -212,21 +172,19 @@ for z in [1]:
 
     # Feature selection
 
-
+    # Using the optimal parameters
     gamma = gamma[np.where(accuracy == accuracy.max())[0][0]]
     c = c[np.where(accuracy == accuracy.max())[1][0]]
     
-    breakpoint()
     n = X.shape[1]
     accuracy = np.zeros((n,n))
     for i in range(n):
         for j in range(n):
             X_two_features = np.c_[X[:,i], X[:,j]]
-            obj = SVM(X_two_features, y, 0, 0, 0, gamma=gamma, C=c, seed=0)
+            obj = SVM(X_two_features, y, gamma=gamma, C=c, seed=0)
             accuracy[i,j] = obj.k_fold(n_kfold=20)[1]
 
-    # Heatmap
-
+    # Heatmap of accuracies obtained with different feature pairs
     plt.figure(figsize=(12,8), tight_layout = True)
     plt.title("SVM(Feature 1, Feature 2)")
     sns.heatmap(accuracy, annot=True, fmt='.3f', 
@@ -248,13 +206,13 @@ for z in [1]:
     for i in range(n):
 
         X_three_features = np.c_[X[:,a], X[:,b], X[:,i]]
-        obj = SVM(X_three_features, y, 0, 0, 0, gamma=gamma, C=c, seed=0)
+        obj = SVM(X_three_features, y, gamma=gamma, C=c, seed=0)
         accuracy[i] = obj.k_fold(n_kfold=50)[1]
     
     
     x = np.arange(n)
 
-
+    # Bar plot of accuracies obtained adding a third feature to the optimal feature pair
     plt.figure(figsize=(12,8), tight_layout = True)
     plt.ylabel("Accuracy")
     plt.xlabel("Third feature")
@@ -263,65 +221,6 @@ for z in [1]:
     plt.bar(x, accuracy)
     plt.savefig(f"third_feature{z}.pdf")
     plt.show()
-
-
-# Check if optimal accuracy obtained with two features have different C and gamma for optimal accuracy
-"""
-input_path = 'big_test.csv'
-r = read_csv.ReadCSV(input_path)
-r._remove_series([0, 2, 3, 5])
-X_df, y_df = r.get_df()
-
-
-X = X_df.values
-y = y_df.values[:,0]
-y = np.where(y == 1, 1, -1)
-y = y.reshape(-1,1)
-
-a, b = 2, 13
-X_two_features = np.c_[X[:,a],X[:,b]]
-
-n = 5
-#c = np.logspace(-1, 4, m)
-c = [0.1, 0.5, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000]
-m = len(c)
-gamma = np.logspace(-3, 1, n)
-accuracy = np.zeros((n,m))
-for i in range(n):
-    for j in range(m):
-        obj = SVM(X_two_features, y, 0, 0, 0, gamma=gamma[i], C=c[j], test_size = 0.25, seed=0)
-        accuracy[i,j] = obj.k_fold(n_kfold=30)[1]
-
-# Heatmap
-
-plt.figure(figsize=(12,8))
-plt.title("SVM(histogram min, glcm homogeneity)")
-sns.heatmap(accuracy, annot=True, fmt='.5g', 
-        cbar_kws={'label': "Accuracy"}, 
-        xticklabels = [f"{x_val:.5g}" for x_val in c],
-        yticklabels=[f"{y_val:.3e}" for y_val in gamma]) 
-plt.xlabel(f"$C$")
-plt.ylabel(f"$\\gamma$")
-
-plt.savefig(f"check.pdf")
-plt.show()
+    
 #"""
 
-# Linear kernel
-"""
-X, y = datasets.make_blobs(
-    n_samples=250, n_features=2, centers=2, cluster_std=1.05, random_state=1
-)
-y = y.T
-y = np.where(y < 1, -1, 1)
-# plot results
-def get_hyperplane(x, w, b, offset):
-    return (-w[0] * x - b + offset) / w[1]
-
-clf = SVM(X, y, 0.01, 0.1, 2000, seed=0)
-
-X_train, X_test, y_train, y_test = clf.X_train, clf.X_test, clf.y_train, clf.y_test
-clf.train()
-clf.plot_hyperplane_2D([0,1])
-plt.show()
-"""
